@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>포토부스 블로그 작성기</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:#FFF5F9;color:#1a1a2e;min-height:100vh;}
+  @keyframes blink{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+  @keyframes loadbar{0%{width:5%}60%{width:80%}100%{width:95%}}
+  textarea:focus{border-color:#FF6B9D!important;box-shadow:0 0 0 3px rgba(255,107,157,.15)!important;outline:none;}
+
+  /* Header */
+  #header{background:white;border-bottom:2px solid #FFE4EF;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(255,107,157,.1);}
+  #logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#FF6B9D,#FF8C69);border-radius:10px;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px rgba(255,107,157,.4);}
+  #logo-title{font-weight:900;font-size:16px;background:linear-gradient(135deg,#FF6B9D,#FF8C69);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  #logo-sub{font-size:10px;color:#9b8ea8;margin-top:-2px;}
+  .brand-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .nav-tabs{display:flex;background:#FFF5F9;border-radius:20px;padding:3px;border:2px solid #FFE4EF;}
+  .nav-tab{padding:5px 14px;border-radius:16px;border:none;background:transparent;color:#9b8ea8;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .nav-tab.active{background:linear-gradient(135deg,#FF6B9D,#FF8C69);color:white;}
+
+  /* Layout */
+  #main{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 60px);}
+  #left{background:white;border-right:2px solid #FFE4EF;padding:24px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:22px;}
+  #right{display:flex;flex-direction:column;background:#FAFAFA;}
+
+  /* Section Title */
+  .sec-title{font-size:10px;font-weight:700;color:#9b8ea8;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+  .sec-line{flex:1;height:1px;background:#FFE4EF;}
+
+  /* Input tabs */
+  .input-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .input-tab{padding:10px 6px;border-radius:12px;border:2px solid #f0e8f5;background:white;color:#9b8ea8;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .input-tab.active{border-color:#FF6B9D;background:#FFF5F9;color:#FF6B9D;}
+
+  /* Keyword area */
+  #kw-hint{font-size:11px;color:#9b8ea8;margin-bottom:8px;line-height:1.6;}
+  #kw-input{width:100%;min-height:100px;padding:12px;border-radius:14px;border:2px solid #FFCDE3;background:#FFF5F9;font-size:13px;font-family:inherit;color:#1a1a2e;resize:vertical;line-height:1.7;}
+  #kw-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+  .kw-tag{padding:3px 10px;border-radius:20px;background:#FFE4EF;color:#FF6B9D;font-size:11px;font-weight:600;}
+
+  /* Upload area */
+  #drop-zone{border:2.5px dashed #FFCDE3;border-radius:18px;background:#FFF5F9;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;}
+  #drop-zone:hover{border-color:#FF6B9D;background:#FFE9F2;}
+  #file-info{display:none;align-items:center;gap:10px;background:linear-gradient(135deg,#fff0f6,#ffe9f9);border:2px solid #ffcde3;border-radius:14px;padding:12px 14px;margin-top:10px;}
+  #file-icon{width:36px;height:36px;background:linear-gradient(135deg,#FF6B9D,#FF8C69);border-radius:10px;display:grid;place-items:center;font-size:16px;flex-shrink:0;}
+  #file-name{font-weight:700;font-size:12px;color:#FF6B9D;margin-bottom:2px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #file-size{font-size:11px;color:#9b8ea8;}
+
+  /* Brand */
+  #brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .brand-card{border:2px solid #f0e8f5;border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;background:white;transition:all .2s;}
+  .brand-emoji{font-size:22px;margin-bottom:5px;}
+  .brand-name{font-size:11px;font-weight:800;margin-bottom:2px;}
+  .brand-desc{font-size:9px;color:#9b8ea8;line-height:1.4;}
+
+  /* Type */
+  #type-list{display:flex;flex-direction:column;gap:8px;}
+  .type-card{border:2px solid #f0e8f5;border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;background:white;transition:all .2s;}
+  .type-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:18px;background:#FFE4EF;flex-shrink:0;transition:background .2s;}
+  .type-name{font-size:12px;font-weight:700;margin-bottom:2px;}
+  .type-desc{font-size:10px;color:#9b8ea8;}
+
+  /* Options */
+  #opts-list{display:flex;flex-direction:column;gap:2px;}
+  .opt-row{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:10px;}
+  .opt-label{font-size:12px;font-weight:600;}
+  .toggle{width:44px;height:24px;border-radius:12px;border:none;cursor:pointer;background:#e8dff0;position:relative;transition:background .25s;flex-shrink:0;}
+  .toggle.on{background:linear-gradient(135deg,#FF6B9D,#FF8C69);}
+  .toggle-knob{position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:3px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+  .toggle.on .toggle-knob{left:23px;}
+
+  /* Generate button */
+  #gen-btn{width:100%;padding:15px;background:linear-gradient(135deg,#FF6B9D,#FF8C69);border:none;border-radius:16px;color:white;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 6px 20px rgba(255,107,157,.4);transition:all .2s;font-family:inherit;}
+  #gen-btn:disabled{background:#f0ccd8;box-shadow:none;cursor:not-allowed;}
+
+  /* Preview header */
+  #preview-header{background:white;border-bottom:2px solid #FFE4EF;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;}
+  .copy-btn{padding:7px 14px;border-radius:20px;border:2px solid #FFCDE3;background:white;color:#FF6B9D;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .copy-btn.primary{border:none;background:linear-gradient(135deg,#FF6B9D,#FF8C69);color:white;box-shadow:0 3px 12px rgba(255,107,157,.35);}
+
+  /* Preview area */
+  #preview-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  #preview-empty,#preview-loading,#preview-done{flex:1;display:none;flex-direction:column;}
+  #preview-done{overflow-y:auto;padding:32px 28px;}
+
+  /* Result card */
+  .result-card{background:white;border-radius:22px;box-shadow:0 4px 32px rgba(0,0,0,.07);overflow:hidden;max-width:680px;margin:0 auto;}
+  .result-top{background:linear-gradient(135deg,#FFF5F9,white);padding:28px 32px 20px;border-bottom:1.5px solid #FFE4EF;}
+  .result-tags{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .result-title{font-size:20px;font-weight:900;line-height:1.4;margin-bottom:10px;}
+  .result-date{font-size:11px;color:#9b8ea8;}
+  .result-body{padding:28px 32px;font-size:14px;line-height:2;color:#333;white-space:pre-wrap;}
+  .result-hash{padding:16px 32px 24px;border-top:1.5px dashed #FFE4EF;font-size:13px;color:#FF6B9D;font-weight:600;line-height:2;}
+  .result-footer{background:#FFF5F9;padding:12px 32px;border-top:1.5px solid #FFE4EF;text-align:center;font-size:11px;color:#9b8ea8;}
+
+  /* History */
+  #history-view{display:none;max-width:720px;margin:32px auto;padding:0 24px;}
+  .hist-card{background:white;border-radius:18px;border:2px solid #FFE4EF;padding:18px 20px;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(255,107,157,.06);margin-bottom:12px;}
+  .hist-card:hover{border-color:#FF6B9D;box-shadow:0 4px 20px rgba(255,107,157,.15);}
+  .hist-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .hist-title{font-weight:800;font-size:14px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hist-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+  .hist-meta{font-size:11px;color:#bbb;}
+  .hist-btns{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+  .hist-load{padding:6px 12px;border-radius:12px;border:none;background:linear-gradient(135deg,#FF6B9D,#FF8C69);color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .hist-del{padding:6px 12px;border-radius:12px;border:2px solid #FFE4EF;background:white;color:#ccc;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .hist-empty{text-align:center;padding:80px 0;color:#9b8ea8;}
+
+  /* Tag helpers */
+  .tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .tag-film{background:#FFE4EF;color:#FF6B9D;}
+  .tag-bytp{background:#E0F4FF;color:#4EACDE;}
+  .tag-kipic{background:#FFF3E0;color:#FF8C42;}
+  .tag-type{background:#F5F0FF;color:#9B8EA8;}
+  .tag-kw{background:#E8F5E9;color:#4CAF50;}
+  .tag-docx{background:#E3F2FD;color:#2196F3;}
+
+  /* Toast */
+  #toast{display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#FF6B9D,#FF8C69);color:white;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(255,107,157,.4);z-index:999;}
+
+  /* Loading dots */
+  .ld{display:inline-block;animation:blink 1.2s ease-in-out infinite;}
+  .ld:nth-child(2){animation-delay:.2s;}
+  .ld:nth-child(3){animation-delay:.4s;}
+  .lb{width:220px;height:6px;background:#FFE4EF;border-radius:6px;overflow:hidden;margin-top:8px;}
+  .lb-inner{height:100%;background:linear-gradient(90deg,#FF6B9D,#FF8C69);border-radius:6px;animation:loadbar 2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div id="logo-icon">📸</div>
+    <div>
+      <div id="logo-title">블로그 작성기</div>
+      <div id="logo-sub">키워드 · DOCX → 네이버 블로그 자동변환</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-editor" onclick="switchView('editor')">✍️ 작성</button>
+      <button class="nav-tab" id="tab-history" onclick="switchView('history')">📋 목록 <span id="hist-count"></span></button>
+    </div>
+    <span class="brand-pill" style="background:#FFE4EF;color:#FF6B9D;">더필름</span>
+    <span class="brand-pill" style="background:#E0F4FF;color:#4EACDE;">BYTP</span>
+    <span class="brand-pill" style="background:#FFF3E0;color:#FF8C42;">KIPIC</span>
+  </div>
+</div>
+
+<!-- Editor View -->
+<div id="editor-view">
+  <div id="main">
+    <!-- Left -->
+    <div id="left">
+
+      <!-- Input method -->
+      <div>
+        <div class="sec-title">📥 입력 방식<div class="sec-line"></div></div>
+        <div class="input-tabs">
+          <button class="input-tab active" id="itab-text" onclick="switchInput('text')">✏️ 키워드 입력</button>
+          <button class="input-tab" id="itab-docx" onclick="switchInput('docx')">📄 DOCX 업로드</button>
+        </div>
+
+        <div id="kw-section">
+          <div id="kw-hint">키워드를 <strong style="color:#FF6B9D;">,</strong> 로 구분해서 입력하세요<br/><span style="font-size:10px;">예) 강남, 포토부스, 커플, 분위기 좋은</span></div>
+          <textarea id="kw-input" placeholder="강남, 포토부스, 커플, 분위기 좋은..." oninput="renderTags()"></textarea>
+          <div id="kw-tags"></div>
+        </div>
+
+        <div id="docx-section" style="display:none;">
+          <div id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+            <div style="font-size:32px;margin-bottom:6px;">📄</div>
+            <div style="font-weight:800;font-size:13px;color:#FF6B9D;margin-bottom:4px;">DOCX 파일을 올려주세요!</div>
+            <div style="font-size:11px;color:#9b8ea8;line-height:1.6;">클릭하거나 드래그해서 업로드<br/>.docx 형식만 지원돼요 🙏</div>
+          </div>
+          <input id="file-input" type="file" accept=".docx" style="display:none;" onchange="handleFile(this.files[0])"/>
+          <div id="file-info">
+            <div id="file-icon">✅</div>
+            <div>
+              <div id="file-name"></div>
+              <div id="file-size"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand -->
+      <div>
+        <div class="sec-title">🏷️ 브랜드<div class="sec-line"></div></div>
+        <div id="brand-grid">
+          <div class="brand-card" id="brand-더필름" onclick="selectBrand('더필름')" style="border-color:#FF6B9D;background:#FFE4EF;">
+            <div class="brand-emoji">📷</div>
+            <div class="brand-name">더필름</div>
+            <div class="brand-desc">1020 여성 · 감성 포토</div>
+          </div>
+          <div class="brand-card" id="brand-BYTP" onclick="selectBrand('BYTP')">
+            <div class="brand-emoji">🎞️</div>
+            <div class="brand-name">BYTP</div>
+            <div class="brand-desc">컨셉 공간 · 전신 포토</div>
+          </div>
+          <div class="brand-card" id="brand-KIPIC" onclick="selectBrand('KIPIC')">
+            <div class="brand-emoji">🌈</div>
+            <div class="brand-name">KIPIC</div>
+            <div class="brand-desc">키치 무드 · 스티커 사진</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type -->
+      <div>
+        <div class="sec-title">✍️ 블로그 유형<div class="sec-line"></div></div>
+        <div id="type-list">
+          <div class="type-card" id="type-홍보" onclick="selectType('홍보')" style="border-color:#FF6B9D;background:#FFF5F9;">
+            <div class="type-icon" style="background:#FF6B9D;">📣</div>
+            <div><div class="type-name">브랜드 소개 / 홍보</div><div class="type-desc">매력 소개 · 신규 방문 유도</div></div>
+          </div>
+          <div class="type-card" id="type-후기" onclick="selectType('후기')">
+            <div class="type-icon" id="type-icon-후기">💬</div>
+            <div><div class="type-name">방문 후기 형식</div><div class="type-desc">체험기 스타일 · 솔직한 리뷰</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div>
+        <div class="sec-title">⚙️ 옵션<div class="sec-line"></div></div>
+        <div id="opts-list">
+          <div class="opt-row"><span class="opt-label">😊 이모지 포함</span><button class="toggle on" id="opt-emoji" onclick="toggleOpt('emoji')"><span class="toggle-knob"></span></button></div>
+          <div class="opt-row"><span class="opt-label">#️⃣ 해시태그 생성</span><button class="toggle on" id="opt-hash" onclick="toggleOpt('hash')"><span class="toggle-knob"></span></button></div>
+          <div class="opt-row"><span class="opt-label">📌 소제목 삽입</span><button class="toggle on" id="opt-h3" onclick="toggleOpt('h3')"><span class="toggle-knob"></span></button></div>
+          <div class="opt-row"><span class="opt-label">✨ 감성 도입부 추가</span><button class="toggle on" id="opt-intro" onclick="toggleOpt('intro')"><span class="toggle-knob"></span></button></div>
+        </div>
+      </div>
+
+      <button id="gen-btn" onclick="generate()">✨ 블로그 글 만들기</button>
+    </div>
+
+    <!-- Right -->
+    <div id="right">
+      <div id="preview-header">
+        <span style="font-weight:800;font-size:14px;">🖊️ 블로그 미리보기</span>
+        <div style="display:flex;gap:8px;">
+          <button class="copy-btn" onclick="copyBody()">본문 복사</button>
+          <button class="copy-btn primary" onclick="copyAll()">전체 복사 ✦</button>
+        </div>
+      </div>
+      <div id="preview-area">
+        <div id="preview-empty" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:60px;">
+          <div style="font-size:64px;">✨</div>
+          <div style="font-size:19px;font-weight:800;">블로그 글을 만들어드릴게요!</div>
+          <div style="font-size:13px;color:#9b8ea8;text-align:center;line-height:1.7;">키워드를 입력하거나 DOCX 파일을 올리고<br/>브랜드를 선택해서 버튼을 눌러보세요 🎀</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:6px;">
+            <div style="text-align:center;font-size:11px;color:#9b8ea8;"><div style="width:28px;height:28px;background:linear-gradient(135deg,#FFE4EF,#FFE9F2);border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#FF6B9D;margin:0 auto 5px;">1</div>키워드/파일</div>
+            <span style="color:#ddd;font-size:16px;">→</span>
+            <div style="text-align:center;font-size:11px;color:#9b8ea8;"><div style="width:28px;height:28px;background:linear-gradient(135deg,#FFE4EF,#FFE9F2);border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#FF6B9D;margin:0 auto 5px;">2</div>브랜드 선택</div>
+            <span style="color:#ddd;font-size:16px;">→</span>
+            <div style="text-align:center;font-size:11px;color:#9b8ea8;"><div style="width:28px;height:28px;background:linear-gradient(135deg,#FFE4EF,#FFE9F2);border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:#FF6B9D;margin:0 auto 5px;">3</div>생성하기!</div>
+          </div>
+        </div>
+        <div id="preview-loading" style="display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;flex:1;">
+          <div style="font-size:40px;"><span class="ld">✍️</span><span class="ld">📝</span><span class="ld">✨</span></div>
+          <div style="font-size:15px;font-weight:700;">AI가 블로그 글을 쓰고 있어요</div>
+          <div style="font-size:12px;color:#9b8ea8;">키워드를 분석해 네이버 블로그 형식으로 변환 중...</div>
+          <div class="lb"><div class="lb-inner"></div></div>
+        </div>
+        <div id="preview-done" style="display:none;overflow-y:auto;padding:32px 28px;">
+          <div class="result-card">
+            <div class="result-top">
+              <div class="result-tags" id="result-tags"></div>
+              <div class="result-title" id="result-title"></div>
+              <div class="result-date" id="result-date"></div>
+            </div>
+            <div class="result-body" id="result-body"></div>
+            <div class="result-hash" id="result-hash" style="display:none;"></div>
+            <div class="result-footer">📸 포토부스 마케팅 블로그 작성기</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- History View -->
+<div id="history-view">
+  <div style="font-weight:900;font-size:18px;margin-bottom:6px;">📋 생성 목록</div>
+  <div style="font-size:13px;color:#9b8ea8;margin-bottom:24px;">지금까지 만든 블로그 글이에요. 클릭하면 다시 불러올 수 있어요!</div>
+  <div id="hist-list"></div>
+</div>
+
+<div id="toast">✅ 클립보드에 복사됐어요!</div>
+
+<script>
+const BRAND = {
+  '더필름': { emoji:'📷', pill:{bg:'#FFE4EF',color:'#FF6B9D'}, voice:'감성적이고 따뜻한 문체. 10-20대 여성 친화적. 일상 기록 감성. "오늘","찰칵","기억" 같은 단어 자주 활용.' },
+  'BYTP':  { emoji:'🎞️', pill:{bg:'#E0F4FF',color:'#4EACDE'}, voice:'세련되고 컨셉추얼한 문체. 공간의 분위기와 무드 강조. 특별한 경험 중심. 감각적인 형용사 활용.' },
+  'KIPIC': { emoji:'🌈', pill:{bg:'#FFF3E0',color:'#FF8C42'}, voice:'키치하고 발랄한 문체. 재미있고 에너지 넘치는 감성. MZ 트렌드 언어. 이모지 자연스럽게 활용.' },
+};
+const TYPE = {
+  '홍보': { icon:'📣', voice:'브랜드 소개 및 홍보 포스트. 브랜드의 특징과 매력을 소개하고 방문을 유도하는 글.' },
+  '후기': { icon:'💬', voice:'"나"의 시점에서 쓴 실제 방문 후기. "저는","다녀왔어요","추천해요" 같은 표현 자연스럽게 사용.' },
+};
+
+let curView = 'editor', inputTab = 'text', brand = '더필름', type = '홍보';
+let opts = { emoji:true, hash:true, h3:true, intro:true };
+let docxText = '', fileName = '', curResult = null, history = [];
+
+// View switch
+function switchView(v) {
+  curView = v;
+  document.getElementById('editor-view').style.display = v === 'editor' ? 'block' : 'none';
+  document.getElementById('history-view').style.display = v === 'history' ? 'block' : 'none';
+  document.getElementById('tab-editor').classList.toggle('active', v === 'editor');
+  document.getElementById('tab-history').classList.toggle('active', v === 'history');
+  if (v === 'history') renderHistory();
+}
+
+// Input tab
+function switchInput(tab) {
+  inputTab = tab;
+  document.getElementById('kw-section').style.display = tab === 'text' ? 'block' : 'none';
+  document.getElementById('docx-section').style.display = tab === 'docx' ? 'block' : 'none';
+  document.getElementById('itab-text').classList.toggle('active', tab === 'text');
+  document.getElementById('itab-docx').classList.toggle('active', tab === 'docx');
+}
+
+// Keyword tags
+function renderTags() {
+  const val = document.getElementById('kw-input').value;
+  const tags = val.split(',').map(k => k.trim()).filter(Boolean);
+  const el = document.getElementById('kw-tags');
+  el.innerHTML = tags.map(k => `<span class="kw-tag">${k}</span>`).join('');
+}
+
+// Brand select
+function selectBrand(b) {
+  brand = b;
+  ['더필름','BYTP','KIPIC'].forEach(n => {
+    const el = document.getElementById('brand-'+n);
+    const bc = BRAND[n].pill;
+    el.style.borderColor = n === b ? bc.color : '#f0e8f5';
+    el.style.background = n === b ? bc.bg : 'white';
+  });
+}
+
+// Type select
+function selectType(t) {
+  type = t;
+  ['홍보','후기'].forEach(n => {
+    const card = document.getElementById('type-'+n);
+    const icon = document.getElementById('type-icon-'+n) || card.querySelector('.type-icon');
+    card.style.borderColor = n === t ? '#FF6B9D' : '#f0e8f5';
+    card.style.background = n === t ? '#FFF5F9' : 'white';
+    card.querySelector('.type-icon').style.background = n === t ? '#FF6B9D' : '#FFE4EF';
+  });
+}
+// fix type icon ids
+document.getElementById('type-list').querySelectorAll('.type-icon').forEach((el, i) => {
+  el.id = 'type-icon-' + (i === 0 ? '홍보' : '후기');
+});
+
+// Toggle
+function toggleOpt(k) {
+  opts[k] = !opts[k];
+  const el = document.getElementById('opt-'+k);
+  el.classList.toggle('on', opts[k]);
+}
+
+// File handling
+async function handleFile(file) {
+  if (!file || !file.name.endsWith('.docx')) return alert('📄 .docx 파일만 지원돼요!');
+  fileName = file.name;
+  try {
+    const mammoth = await import('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+    const buf = await file.arrayBuffer();
+    const res = await mammoth.default.extractRawText({ arrayBuffer: buf });
+    docxText = res.value.trim();
+  } catch {
+    docxText = await file.text();
+  }
+  document.getElementById('file-name').textContent = fileName;
+  document.getElementById('file-size').textContent = docxText.length.toLocaleString() + '자 추출 완료 ✓';
+  document.getElementById('file-info').style.display = 'flex';
+}
+function handleDrop(e) { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }
+
+// Generate
+async function generate() {
+  const isDocx = inputTab === 'docx';
+  const kw = document.getElementById('kw-input').value.trim();
+  if (isDocx && !docxText) return alert('📄 먼저 DOCX 파일을 올려주세요!');
+  if (!isDocx && !kw) return alert('✏️ 키워드를 입력해주세요!');
+
+  setPreview('loading');
+  document.getElementById('gen-btn').disabled = true;
+
+  const kwList = kw.split(',').map(k => k.trim()).filter(Boolean);
+  const userContent = isDocx
+    ? `아래 원문을 네이버 블로그 글로 변환해주세요:\n\n${docxText.slice(0,3000)}`
+    : `아래 키워드들을 활용해서 네이버 블로그 글을 작성해주세요.\n\n키워드: ${kwList.join(', ')}\n\n${TYPE[type].voice} 스타일로 블로그 글을 완성해주세요.`;
+
+  const sys = `당신은 네이버 블로그 전문 작가입니다.
+브랜드: ${brand} / 보이스: ${BRAND[brand].voice}
+유형: ${TYPE[type].voice}
+규칙:
+- 네이버 블로그 특유의 친근하고 읽기 좋은 한국어 문체
+- ${opts.emoji ? "이모지를 자연스럽게 포함 (문단당 1-2개)" : "이모지 사용 금지"}
+- ${opts.h3 ? "소제목을 [▶ 소제목] 형태로 2-3개 삽입" : "소제목 없이 자연스럽게 흐르는 글"}
+- ${opts.intro ? "도입부에 공감을 끌어내는 감성 첫 문장으로 시작" : "바로 본론으로 시작"}
+- 전체 800~1400자 목표, 마무리에 방문/저장 유도
+JSON 형식으로만 응답 (코드블록 없이):
+{"title":"매력적인 블로그 제목","body":"블로그 본문 전체","hashtags":"${opts.hash ? "#태그1 #태그2 등 관련 해시태그 12개" : ""}"}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys, messages:[{role:'user',content:userContent}] }),
+    });
+    const data = await res.json();
+    const raw = data.content.map(i => i.text||'').join('');
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { parsed = {title:'블로그 글',body:raw,hashtags:''}; }
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const meta = { id:Date.now(), brand, type, inputType:isDocx?'DOCX':'키워드', keywords:isDocx?fileName:kwList.join(', '), dateStr, result:parsed };
+    curResult = parsed;
+    history.unshift(meta);
+    updateHistCount();
+    renderResult(parsed, meta);
+    setPreview('done');
+  } catch(e) {
+    setPreview('empty');
+    alert('오류가 발생했어요. 다시 시도해주세요 🙏');
+  }
+  document.getElementById('gen-btn').disabled = false;
+}
+
+function setPreview(s) {
+  ['empty','loading','done'].forEach(id => {
+    const el = document.getElementById('preview-'+id);
+    el.style.display = s === id ? 'flex' : 'none';
+    if (s === id && id === 'done') el.style.display = 'block';
+  });
+}
+
+function renderResult(r, meta) {
+  const bc = BRAND[meta.brand].pill;
+  document.getElementById('result-tags').innerHTML =
+    `<span class="tag" style="background:${bc.bg};color:${bc.color};">${meta.brand}</span>` +
+    `<span class="tag tag-type">${meta.type}</span>` +
+    `<span class="tag ${meta.inputType==='키워드'?'tag-kw':'tag-docx'}">${meta.inputType==='키워드'?'✏️':'📄'} ${meta.inputType}</span>`;
+  document.getElementById('result-title').textContent = r.title;
+  document.getElementById('result-date').textContent = meta.dateStr + ' · ' + meta.brand;
+  document.getElementById('result-body').textContent = r.body;
+  const hashEl = document.getElementById('result-hash');
+  if (r.hashtags) { hashEl.textContent = r.hashtags; hashEl.style.display = 'block'; }
+  else { hashEl.style.display = 'none'; }
+}
+
+function updateHistCount() {
+  document.getElementById('hist-count').textContent = history.length > 0 ? `(${history.length})` : '';
+}
+
+function renderHistory() {
+  const el = document.getElementById('hist-list');
+  if (history.length === 0) {
+    el.innerHTML = `<div class="hist-empty"><div style="font-size:48px;margin-bottom:12px;">📭</div><div style="font-weight:700;font-size:15px;margin-bottom:6px;">아직 생성된 글이 없어요</div><div style="font-size:13px;">작성 탭에서 블로그 글을 만들어보세요!</div><button onclick="switchView('editor')" style="margin-top:18px;padding:10px 24px;background:linear-gradient(135deg,#FF6B9D,#FF8C69);border:none;border-radius:20px;color:white;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">✍️ 작성하러 가기</button></div>`;
+    return;
+  }
+  el.innerHTML = history.map(item => {
+    const bc = BRAND[item.brand].pill;
+    return `<div class="hist-card" onclick="loadHistory(${item.id})">
+      <div class="hist-row">
+        <div style="flex:1;min-width:0;">
+          <div class="hist-title">${item.result.title}</div>
+          <div class="hist-tags">
+            <span class="tag" style="background:${bc.bg};color:${bc.color};">${item.brand}</span>
+            <span class="tag tag-type">${item.type}</span>
+            <span class="tag ${item.inputType==='키워드'?'tag-kw':'tag-docx'}">${item.inputType==='키워드'?'✏️':'📄'} ${item.inputType}</span>
+          </div>
+          <div class="hist-meta">🕐 ${item.dateStr}${item.keywords?' · '+item.keywords.substring(0,40):''}</div>
+        </div>
+        <div class="hist-btns">
+          <button class="hist-load" onclick="event.stopPropagation();loadHistory(${item.id})">불러오기</button>
+          <button class="hist-del" onclick="event.stopPropagation();deleteHistory(${item.id})">삭제</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadHistory(id) {
+  const item = history.find(h => h.id === id);
+  if (!item) return;
+  curResult = item.result;
+  brand = item.brand; type = item.type;
+  selectBrand(brand); selectType(type);
+  renderResult(item.result, item);
+  setPreview('done');
+  switchView('editor');
+}
+
+function deleteHistory(id) {
+  history = history.filter(h => h.id !== id);
+  updateHistCount();
+  renderHistory();
+}
+
+// Copy
+function copyAll() {
+  if (!curResult) return;
+  const text = `${curResult.title}\n\n${curResult.body}${curResult.hashtags?'\n\n'+curResult.hashtags:''}`;
+  navigator.clipboard.writeText(text).then(showToast);
+}
+function copyBody() {
+  if (!curResult) return;
+  navigator.clipboard.writeText(curResult.body).then(showToast);
+}
+function showToast() {
+  const t = document.getElementById('toast');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2200);
+}
+
+// Init
+setPreview('empty');
+</script>
+</body>
+</html>
